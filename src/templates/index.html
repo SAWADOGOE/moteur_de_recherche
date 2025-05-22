@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moteur de Recherche</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .search-container {
+            text-align: center;
+            margin: 50px 0;
+        }
+        .search-box {
+            width: 100%;
+            max-width: 600px;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 24px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .search-box:focus {
+            border-color: #4285f4;
+        }
+        .search-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .search-button:hover {
+            background-color: #357abd;
+        }
+        .filters {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .filter-group {
+            margin-bottom: 15px;
+        }
+        .filter-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .filter-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .results {
+            margin-top: 30px;
+        }
+        .result-item {
+            background-color: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .result-title {
+            color: #1a0dab;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        .result-score {
+            color: #006621;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .result-content {
+            color: #545454;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        .stats {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .crawler-form {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <h1>Moteur de Recherche</h1>
+        <input type="text" id="searchInput" class="search-box" placeholder="Entrez votre recherche...">
+        <button onclick="search()" class="search-button">Rechercher</button>
+    </div>
+
+    <div class="filters">
+        <h2>Filtres</h2>
+        <div class="filter-group">
+            <label class="filter-label">Score minimum:</label>
+            <input type="number" id="minScore" class="filter-input" min="0" max="1" step="0.1" value="0">
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Date après:</label>
+            <input type="date" id="dateAfter" class="filter-input">
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Trier par:</label>
+            <select id="sortBy" class="filter-input">
+                <option value="relevance">Pertinence</option>
+                <option value="date">Date</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="crawler-form">
+        <h2>Ajouter des documents</h2>
+        <div class="filter-group">
+            <label class="filter-label">URL de départ:</label>
+            <input type="url" id="crawlUrl" class="filter-input" placeholder="https://example.com">
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Nombre maximum de pages:</label>
+            <input type="number" id="maxPages" class="filter-input" value="100" min="1">
+        </div>
+        <button onclick="startCrawling()" class="search-button">Lancer le crawler</button>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+        <p>Chargement en cours...</p>
+    </div>
+
+    <div class="stats" id="stats">
+        <h2>Statistiques</h2>
+        <p>Documents indexés: <span id="totalDocs">0</span></p>
+        <p>Taille du cache: <span id="cacheSize">0</span></p>
+    </div>
+
+    <div id="results" class="results"></div>
+
+    <script>
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function updateStats() {
+            fetch('/stats')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('totalDocs').textContent = data.total_documents;
+                    document.getElementById('cacheSize').textContent = data.cache_size;
+                });
+        }
+
+        function search() {
+            const query = document.getElementById('searchInput').value;
+            if (!query) return;
+
+            showLoading();
+
+            const minScore = document.getElementById('minScore').value;
+            const dateAfter = document.getElementById('dateAfter').value;
+            const sortBy = document.getElementById('sortBy').value;
+
+            let url = `/search?q=${encodeURIComponent(query)}`;
+            if (minScore) url += `&min_score=${minScore}`;
+            if (dateAfter) url += `&date_after=${dateAfter}`;
+            url += `&sort_by=${sortBy}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const resultsDiv = document.getElementById('results');
+                    resultsDiv.innerHTML = '';
+
+                    if (data.results.length === 0) {
+                        resultsDiv.innerHTML = '<p>Aucun résultat trouvé.</p>';
+                        return;
+                    }
+
+                    data.results.forEach(result => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'result-item';
+                        resultItem.innerHTML = `
+                            <div class="result-title">Document ${result.id}</div>
+                            <div class="result-score">Score de pertinence: ${(result.score * 100).toFixed(2)}%</div>
+                            <div class="result-content">${result.content}</div>
+                        `;
+                        resultsDiv.appendChild(resultItem);
+                    });
+
+                    updateStats();
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    document.getElementById('results').innerHTML = '<p>Une erreur est survenue lors de la recherche.</p>';
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+        }
+
+        function startCrawling() {
+            const url = document.getElementById('crawlUrl').value;
+            const maxPages = document.getElementById('maxPages').value;
+
+            if (!url) {
+                alert('Veuillez entrer une URL valide');
+                return;
+            }
+
+            showLoading();
+
+            fetch('/crawl', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    url: url,
+                    max_pages: parseInt(maxPages)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Erreur: ' + data.error);
+                } else {
+                    alert(data.message);
+                    updateStats();
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Une erreur est survenue lors du crawling');
+            })
+            .finally(() => {
+                hideLoading();
+            });
+        }
+
+        // Permettre la recherche avec la touche Entrée
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                search();
+            }
+        });
+
+        // Charger les statistiques au démarrage
+        updateStats();
+    </script>
+</body>
+</html> 
