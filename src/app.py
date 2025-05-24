@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
-from search_engine import SearchEngine
-from crawler import WebCrawler
-from google_search import GoogleSearchAPI
+from .search_engine import SearchEngine
+from .crawler import WebCrawler
+from .google_search import GoogleSearchAPI
 import os
 from datetime import datetime
 import logging
