@@ -80,7 +80,7 @@ class SearchEngine:
         # Trier les résultats par pertinence
         results = []
         for idx, score in enumerate(similarities):
-            if score > 0:
+            if score > 0.1:  # Seuil de pertinence minimum
                 doc_id = [k for k, v in self.index.items() if v == idx][0]
                 result = {
                     'id': doc_id,
@@ -101,6 +101,9 @@ class SearchEngine:
             results.sort(key=lambda x: x['score'], reverse=True)
         elif sort_by == 'date':
             results.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        # Limiter le nombre de résultats à 10
+        results = results[:10]
         
         # Mettre en cache les résultats
         self.cache[f"{query}_{filters_str}"] = {

@@ -67,27 +67,67 @@
         .results {
             margin-top: 30px;
         }
+        .results-container {
+            margin-top: 30px;
+        }
         .result-item {
-            background-color: white;
-            padding: 15px;
-            margin-bottom: 15px;
+            background: white;
+            border: 1px solid #ddd;
             border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
         .result-title {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .result-title a {
             color: #1a0dab;
-            font-size: 18px;
-            margin-bottom: 5px;
+            text-decoration: none;
+        }
+        .result-title a:hover {
+            text-decoration: underline;
         }
         .result-score {
-            color: #006621;
-            font-size: 14px;
-            margin-bottom: 10px;
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
         }
         .result-content {
-            color: #545454;
-            font-size: 14px;
-            line-height: 1.4;
+            color: #4d5156;
+            line-height: 1.5;
+            margin: 15px 0;
+            font-size: 0.95em;
+        }
+        .result-footer {
+            display: flex;
+            justify-content: space-between;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+        .result-source {
+            color: #006621;
+        }
+        .result-url a {
+            color: #006621;
+            text-decoration: none;
+        }
+        .result-url a:hover {
+            text-decoration: underline;
         }
         .stats {
             margin-top: 20px;
@@ -116,6 +156,14 @@
             height: 40px;
             animation: spin 1s linear infinite;
             margin: 0 auto;
+        }
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -173,7 +221,7 @@
         <p>Taille du cache: <span id="cacheSize">0</span></p>
     </div>
 
-    <div id="results" class="results"></div>
+    <div id="results" class="results-container"></div>
 
     <script>
         function showLoading() {
@@ -198,6 +246,7 @@
             if (!query) return;
 
             showLoading();
+            console.log('Début de la recherche pour:', query);
 
             const minScore = document.getElementById('minScore').value;
             const dateAfter = document.getElementById('dateAfter').value;
@@ -208,36 +257,72 @@
             if (dateAfter) url += `&date_after=${dateAfter}`;
             url += `&sort_by=${sortBy}`;
 
+            console.log('URL de recherche:', url);
+
             fetch(url)
-                .then(response => response.json())
+                .then(response => {
+                    console.log('Réponse reçue:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Données reçues:', data);
                     const resultsDiv = document.getElementById('results');
                     resultsDiv.innerHTML = '';
 
-                    if (data.results.length === 0) {
+                    if (!data.results || data.results.length === 0) {
                         resultsDiv.innerHTML = '<p>Aucun résultat trouvé.</p>';
+                        hideLoading();
                         return;
                     }
 
-                    data.results.forEach(result => {
+                    data.results.forEach((result, index) => {
+                        console.log(`Traitement du résultat ${index + 1}:`, result);
+                        
                         const resultItem = document.createElement('div');
                         resultItem.className = 'result-item';
+                        
+                        const title = result.title ? result.title.trim() : 'Sans titre';
+                        const url = result.url ? result.url.trim() : '#';
+                        const snippet = result.snippet ? result.snippet.trim() : 
+                                      result.content ? result.content.trim() : 
+                                      'Aucune description disponible';
+                        const score = parseFloat(result.score) || 0;
+                        const source = result.source ? result.source.trim() : 'Inconnu';
+                        
                         resultItem.innerHTML = `
-                            <div class="result-title">Document ${result.id}</div>
-                            <div class="result-score">Score de pertinence: ${(result.score * 100).toFixed(2)}%</div>
-                            <div class="result-content">${result.content}</div>
+                            <div class="result-header">
+                                <div class="result-title">
+                                    <a href="${url}" target="_blank" rel="noopener noreferrer">${title}</a>
+                                </div>
+                                <div class="result-score">Score: ${score.toFixed(2)}</div>
+                            </div>
+                            <div class="result-content">
+                                ${snippet}
+                            </div>
+                            <div class="result-footer">
+                                <span class="result-source">Source: ${source}</span>
+                                <span class="result-url">URL: <a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a></span>
+                            </div>
                         `;
+                        
                         resultsDiv.appendChild(resultItem);
                     });
-
-                    updateStats();
+                    
+                    console.log('Affichage des résultats terminé');
+                    hideLoading();
                 })
                 .catch(error => {
-                    console.error('Erreur:', error);
-                    document.getElementById('results').innerHTML = '<p>Une erreur est survenue lors de la recherche.</p>';
-                })
-                .finally(() => {
+                    console.error('Erreur lors de la recherche:', error);
                     hideLoading();
+                    document.getElementById('results').innerHTML = `
+                        <div class="error-message">
+                            <p>Une erreur est survenue lors de la recherche.</p>
+                            <p>Détails: ${error.message}</p>
+                        </div>
+                    `;
                 });
         }
 
@@ -280,14 +365,14 @@
             });
         }
 
-        // Permettre la recherche avec la touche Entrée
+        // Ajouter la recherche lors de l'appui sur Entrée
         document.getElementById('searchInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 search();
             }
         });
 
-        // Charger les statistiques au démarrage
+        // Mettre à jour les statistiques au chargement
         updateStats();
     </script>
 </body>

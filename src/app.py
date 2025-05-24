@@ -1,11 +1,18 @@
 from flask import Flask, render_template, request, jsonify
 from search_engine import SearchEngine
 from crawler import WebCrawler
+from google_search import GoogleSearchAPI
 import os
 from datetime import datetime
+import logging
+
+# Configuration du logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 search_engine = SearchEngine()
+google_search = GoogleSearchAPI()
 
 @app.route('/')
 def home():
@@ -14,6 +21,8 @@ def home():
 @app.route('/search')
 def search():
     query = request.args.get('q', '')
+    logger.debug(f"Requête de recherche reçue: {query}")
+    
     if not query:
         return jsonify({'results': []})
     
@@ -29,8 +38,27 @@ def search():
     
     sort_by = request.args.get('sort_by', 'relevance')
     
-    results = search_engine.search(query, filters, sort_by)
-    return jsonify({'results': results})
+    try:
+        # Obtenir les résultats des deux sources
+        local_results = search_engine.search(query, filters, sort_by)
+        logger.debug(f"Résultats locaux: {len(local_results)}")
+        
+        google_results = google_search.search(query)
+        logger.debug(f"Résultats Google: {len(google_results)}")
+        
+        # Combiner les résultats
+        all_results = local_results + google_results
+        logger.debug(f"Total des résultats: {len(all_results)}")
+        
+        # Trier les résultats si nécessaire
+        if sort_by == 'relevance':
+            all_results.sort(key=lambda x: x.get('score', 0), reverse=True)
+        
+        return jsonify({'results': all_results})
+    
+    except Exception as e:
+        logger.error(f"Erreur lors de la recherche: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/crawl', methods=['POST'])
 def crawl():
