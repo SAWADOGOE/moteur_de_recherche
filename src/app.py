@@ -10,7 +10,8 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+# Spécifier le dossier static explicitement, car il est à la racine du projet
+app = Flask(__name__, static_folder='../static')
 search_engine = SearchEngine()
 google_search = GoogleSearchAPI()
 

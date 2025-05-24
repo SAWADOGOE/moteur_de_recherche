@@ -169,9 +169,84 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .footer {
+            margin-top: 50px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            text-align: center;
+        }
+        
+        .footer-title {
+            font-size: 1.2em;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        .footer-authors {
+            color: #34495e;
+            margin-bottom: 10px;
+        }
+        
+        .footer-supervisor {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
+        .footer-divider {
+            margin: 10px 0;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .header-info {
+            text-align: center;
+            flex-grow: 1;
+        }
+        
+        .header-title {
+            font-size: 1.5em;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .header-authors {
+            color: #34495e;
+            font-size: 1em;
+        }
+        
+        .header-supervisor {
+            color: #7f8c8d;
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .header-image {
+            max-height: 150px; /* Ajustez la taille selon vos besoins */
+            max-width: 150px; /* Ajouter max-width pour maintenir le ratio */
+        }
     </style>
 </head>
 <body>
+    <div class="header-container">
+        <img src="/static/Logo_Université_de_Ouagadougou-292x300.jpg" alt="Image Université" class="header-image" style="margin-right: 20px;">
+        <div class="header-info">
+            <div class="header-title">Master 2 Informatique</div>
+            <div class="header-authors">Etudiant: SAWADOGO Emmanuel, SAWADOGO Ousseni, DIANDA Caleb</div>
+            <div class="header-supervisor"><br/>Encadreur: Dr Kiswendsida Kisito Kaboré</div>
+        </div>
+        <img src="/static/ufrsea.png" alt="Image UFR/SEA" class="header-image" style="margin-left: 20px;">
+    </div>
+
     <div class="search-container">
         <h1>Moteur de Recherche</h1>
         <input type="text" id="searchInput" class="search-box" placeholder="Entrez votre recherche...">
@@ -222,6 +297,18 @@
     </div>
 
     <div id="results" class="results-container"></div>
+
+    <footer class="footer">
+        <div class="footer-title">Master 2 Informatique</div>
+        <div class="footer-authors">
+            EtudiantSAWADOGO Emmanuel, SAWADOGO Ousseni, DIANDA Caleb
+        </div>
+        <div class="footer-divider"></div>
+        <div class="footer-supervisor">
+            <br/>
+            Encadreur: Dr Kiswendsida Kisito Kaboré
+        </div>
+    </footer>
 
     <script>
         function showLoading() {
